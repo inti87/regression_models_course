@@ -46,7 +46,7 @@ In our analysis we will be using "**Motor Trend Car Road Tests**" (**MTCARS**) d
 Main idea of the analysis is:
 
 * to build a linear regression model
-* outcome we try to predict with model is variable **mpg** (car's fuel economy - Miles/(US) gallon)
+* selected model outcome variable **mpg** (car's fuel economy - Miles/(US) gallon)
 * proposed model will include regressor variable **am** (type of transmission)
 *  we will also include some other regressors variables, if this is a logical step proposed by model selection procedure
 * first we start with data exploration
@@ -88,7 +88,7 @@ df <- mtcars %>%
 
 ```
 
-To dig a little more deeper lets create a scatter plot drawing **mpg** VS *am*:
+To dig a little more deeper lets create a scatter plot drawing **mpg** VS **am**:
 ```{r mpgam}
 df %>% 
   ggplot(aes(x = am, y = mpg, color = am)) + 
@@ -107,7 +107,7 @@ We will follow given modeling strategy:
 * using **bencmark model** calculate variance inflation factor (VIF) for each regressor
 * do a nested model search using VIF as indicator what is included first and ANOVA to tell us which model is the most significant
 
-Let's build a benchmark model and calculate VIF (and also visualize regressors based on VIF):
+Let's build a benchmark model and calculate VIF:
 
 ```{r benchmarkVIF}
 modb <- lm(mpg ~ ., mtcars) # fit benchmark model
@@ -119,7 +119,7 @@ VIF <- data.frame(var = names(VIF),
   arrange(desc(priotiry), VIF) # sort variables
 ```
 
-Now lets fir models for a model nested search, we strat with one regressor **am**, then for each next model we add one additional regressor: 
+Now lets fit given models for a model nested search, we start with one regressor **am**, then for each next model we add one additional regressor: 
 
 ```{r modelbuild}
 for(m in 1:nrow(VIF)){
