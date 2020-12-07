@@ -1,0 +1,139 @@
+---
+title: "Modeling Car Fuel Economy"
+author: "Marko Intihar"
+date: "12/7/2020"
+output: pdf_document
+---
+
+```{r setoptions, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, fig.width = 7, fig.height = 3,
+                      warning = FALSE)
+```
+
+```{r firststep, message=FALSE, echo=FALSE}
+rm(list = ls())
+graphics.off()
+# Load R packages
+packages <- c("dplyr", "ggplot2", "datasets", "purrr", "GGally", "car") # list of packages to load
+package.check <- lapply( # load or install & load list of packages
+  packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE)
+      library(x, character.only = TRUE)
+    }
+  }
+) 
+rm(packages, package.check)
+```
+
+
+## Executive Summary
+
+
+
+## Analysis Outline
+
+In our analysis we will be using "**Motor Trend Car Road Tests**" (**MTCARS**) data set. Our main goal is to answer given questions:
+
+* Is an automatic or manual transmission better for MPG?
+* Quantify the MPG difference between automatic and manual transmissions?
+
+Main idea of the analysis is:
+
+* to build a linear regression model
+* outcome we try to predict with model is variable **mpg** (car's fuel economy - Miles/(US) gallon)
+* proposed model will include regressor variable **am** (type of transmission)
+*  we will also include some other regressors variables, if this is a logical step proposed by model selection procedure
+* first we start with data exploration
+
+
+
+## Exploratory Data Analysis
+
+Let's first create scatter plot matrix, which shows us pairwise plots and correlation estimation for given variables:
+
+```{r scatterplotmatrix, fig.width = 15, fig.height = 8}
+ggpairs(data = mtcars)
+
+```
+
+From the figure above we can see how outcome variable **mpg** is related to other variables. If we compare **mpg** to type of transmission **am**, we can see there are some differences in fuel consumption regarding "manual" or "automatic" transmission. The linear correlation between two variables is `r round(cor(mtcars$mpg, mtcars$am),2)` (estimated on sample) indicated a medium positive linear correlation between outcome (**mpg**) and variable of interest (**am**).
+The scatter plot matrix also show other linear correlation factors between outcome variable and other potential regressor variables. Based on the figure we will code the following variables as factors (based on their vlaues):
+
+* **am** - type of transmission
+* **cyl** - number of cylinders
+* **vs** - type of engine
+* **gear** - number of forward gears
+* **carb** - number of carburetors
+
+Remaining data set variables are coded as numerical variables.
+
+Now let's recode factor variables:
+```{r datawrangling}
+df <- mtcars %>% 
+  mutate(am = case_when(am == 0 ~ "automatic",
+                        am == 1 ~ "manual"),
+         am = as.factor(am),
+         vs = case_when(vs == 0 ~ "V-shaped",
+                        vs == 1 ~ "straight"),
+         vs = as.factor(vs),
+         cyl = as.factor(cyl),
+         gear = as.factor(gear),
+         carb = as.factor(carb))
+
+```
+
+To dig a little more deeper lets create a scatter plot drawing **mpg** VS *am*:
+```{r mpgam}
+df %>% 
+  ggplot(aes(x = am, y = mpg, color = am)) + 
+  geom_jitter(width = 0.1) +
+  xlab("Type of transmission") + 
+  ylab("mpg	Miles/(US) gallon") +
+  ggtitle("mpg VS am")
+```
+
+
+## Modeling
+
+We will follow given modeling strategy:
+
+* build linear model where outcome is **mpg** and all other MTCARS variables are regressor variables - **benchmark model**
+* using **bencmark model** calculate variance inflation factor (VIF) for each regressor
+* do a nested model search using VIF as indicator what is included first and ANOVA to tell us which model is the most significant
+
+Let's build a benchmark model and calculate VIF (and also visualize regressors based on VIF):
+
+```{r benchmarkVIF}
+modb <- lm(mpg ~ ., mtcars) # fit benchmark model
+VIF <- car::vif(modb) # variance inflation factors
+VIF <- data.frame(var = names(VIF),
+                  VIF = VIF) %>% 
+  mutate(priotiry = case_when(var == "am" ~ 1, 
+                              T ~ 0)) %>% 
+  arrange(desc(priotiry), VIF) # sort variables
+```
+
+Now lets fir models for a model nested search, we strat with one regressor **am**, then for each next model we add one additional regressor: 
+
+```{r modelbuild}
+for(m in 1:nrow(VIF)){
+  mod <- lm(mpg ~ ., 
+            data = df[, c("mpg", VIF %>% head(m) %>% pull(var))])
+  assign(paste0("mod",m), mod)
+}
+
+```
+
+Now apply ANOVA for selecting final model:
+```{r ANOVA}
+anova(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)
+
+```
+
+
+
+
+
+
