@@ -30,6 +30,10 @@ rm(packages, package.check)
 
 ## Executive Summary
 
+Modeling results indicate that cars with **automatic transmission** consume less fuel than cars with **manual transmission**. Therefore car fuel economy is better for automatic cars than cars with manual transmission, this is indicated by a smaller miles per gallon fuel consumption. 
+
+On average cars with automatic transmission have a 17.1 miles per gallon consumption, their manual transmission counterparts on average consume 7 additional gallons per mile, since average manual transmission car consumption is 24.4 miles per gallon. Confidence intervals for each transmission type regarding miles per gallon consumption also indicates that automatic transmission is better than manual transmission when it comes to fuel consumption.
+
 
 
 ## Analysis Outline
@@ -131,6 +135,25 @@ Now apply ANOVA for selecting final model:
 anova(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)
 
 ```
+
+We have decided to select model 1 (with our initial regressor **am**) as final model. We know that ANOVA test on our nested model search indicates model 2 as potential candidate. Nevertheless, model 1 is more simple, parsimonous and also all regressors are significant. Now let's check selected model summary and let's show residual diagnostics plot (in order to find some potential outliers):
+
+```{r summary, fig.width=8, fig.height=6}
+summary(mod1)$coefficients
+
+par(mfrow = c(2,2))
+plot(mod1)
+```
+
+The summary indicates that our selected factor regressor variable is statistical significant, and also residual diagnostic plots does not indicate any outlier points that can cause some issues when using model for inference or predictions.
+
+
+## Final results
+
+If we consider **automatic transmission** the model is indicating that on average car has fuel consumption of `r round(summary(mod1)$coefficients[1,1], 1)` miles per gallon. Cars with **manual transmission** have a higher fuel consumption, since average **mpg** is `r round(summary(mod1)$coefficients[1,1] + summary(mod1)$coefficients[2,1], 1)`. When considering 95% confidence interval we are able to estimate car fuel consumption for both type of transmissions:
+
+* **automatic** confidence interval (units miles per gallon): (`r round(summary(mod1)$coefficients[1,1] - qt(p = 0.975, df = nrow(df)) * summary(mod1)$coefficients[1,2],1)`, `r round(summary(mod1)$coefficients[1,1] + qt(p = 0.975, df = nrow(df)) * summary(mod1)$coefficients[1,2],1)`)
+* **manual** confidence interval (units miles per gallon): (`r round(summary(mod1)$coefficients[1,1] + summary(mod1)$coefficients[2,1] - qt(p = 0.975, df = nrow(df)) * summary(mod1)$coefficients[2,2],1)`, `r round(summary(mod1)$coefficients[1,1] + summary(mod1)$coefficients[2,1] + qt(p = 0.975, df = nrow(df)) * summary(mod1)$coefficients[2,2],1)`)
 
 
 
